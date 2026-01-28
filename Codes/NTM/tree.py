@@ -17,6 +17,33 @@ class node(object):
         return '<{}>'.format(self.value)
 
 
+class MixingNode(node):
+    """
+    Alias for the paper's MixingNode concept.
+
+    Attributes:
+    - id: derived from object identity
+    - children: list of MixingNode
+    - reagent_inputs: represented by leaf nodes with volumes
+    - total_volume: sum of children volumes (for mixers)
+    - output_to_parent: node.volume
+    """
+
+    @property
+    def id(self):
+        return id(self)
+
+    @property
+    def output_to_parent(self):
+        return self.volume
+
+    @property
+    def total_volume(self):
+        if not self.children:
+            return self.volume
+        return sum(child.volume for child in self.children)
+
+
 ######################################################################################
 from copy import deepcopy
 

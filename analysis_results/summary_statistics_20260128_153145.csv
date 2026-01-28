@@ -1,0 +1,26 @@
+PMD Mixing Tree Analysis Summary
+Generated:,2026-01-28 15:31:46
+
+OVERALL STATISTICS
+Metric,Value
+Total Trees,1200
+Total Original Flushing,1955
+Total Modified Flushing,1729
+Mean Flushing Reduction (%),-0.72
+Total Original Loading,20459
+Total Modified Loading,19435
+Loading Increase (%),-5.01
+Mean Original Flushing Time (s),24.76
+Mean Modified Flushing Time (s),21.90
+Nodes Scaled,5007
+Nodes Merged,1024
+T-Test P-Value,0.000140
+
+STATISTICS BY HEIGHT
+Height,Count,Orig Flush Mean,Orig Flush Std,Mod Flush Mean,Mod Flush Std,Reduction Mean,Reduction %,Orig Load Mean,Mod Load Mean,Orig Time Mean (s),Mod Time Mean (s)
+2,100,0.49,0.50,0.47,0.50,0.02,53.0%,3.02,2.95,7.45,7.14
+3,300,0.87,0.64,0.92,0.51,-0.05,16.8%,6.53,6.25,13.22,13.93
+4,300,1.38,0.99,1.32,0.93,0.06,-6.5%,11.50,10.90,20.98,20.11
+5,300,2.09,1.71,1.72,1.33,0.37,-12.1%,20.31,19.25,31.72,26.09
+6,100,3.04,2.53,2.34,2.07,0.70,-19.1%,31.50,30.09,46.21,35.57
+7,100,3.01,2.87,2.61,2.45,0.40,-37.3%,55.03,52.12,45.75,39.67

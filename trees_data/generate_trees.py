@@ -2,9 +2,8 @@
 Random Mixing Tree Generator
 
 Generates 100 unique random mixing trees with the following constraints:
-- Height <= 4
 - Reagents: {R1, R2, R3, R4}
-- Edge weights: random natural numbers from 1 to 10
+- Edge weights: random natural numbers from 1 to 3
 - Fluid physics: mixer output volume <= sum of children volumes
 """
 
@@ -37,10 +36,13 @@ class node(object):
         return '<{}>'.format(self.value)
 
 REAGENTS = ['R1', 'R2', 'R3', 'R4']
-MAX_HEIGHT = 7  # Increased to support height 7 trees
-MAX_VOLUME = 10
+MAX_HEIGHT = 7  
+MAX_VOLUME = 4
 MIN_VOLUME = 1
-NUM_TREES = 600  # 100 per height (2-7)
+NUM_TREES = 1200  # 300 per height for 3-5 plus 100 each for 2,6,7
+
+# Global counter for unique mixer names
+_mixer_counter = 0
 
 
 def generate_random_tree(max_depth=5, current_depth=0, force_depth=False):
@@ -55,6 +57,12 @@ def generate_random_tree(max_depth=5, current_depth=0, force_depth=False):
     Returns:
         A node object representing the tree/subtree
     """
+    global _mixer_counter
+    
+    # Reset counter at root level for each new tree
+    if current_depth == 0:
+        _mixer_counter = 0
+    
     # At max depth, must be a leaf (reagent) node
     if current_depth >= max_depth:
         reagent = random.choice(REAGENTS)
@@ -91,7 +99,11 @@ def generate_random_tree(max_depth=5, current_depth=0, force_depth=False):
     max_allowed_volume = min(total_children_volume, MAX_VOLUME)
     volume = random.randint(MIN_VOLUME, max_allowed_volume)
     
-    return node(f'M{current_depth}', vol=volume, children=children)
+    # Assign unique mixer name
+    _mixer_counter += 1
+    mixer_name = f'M{_mixer_counter}'
+    
+    return node(mixer_name, vol=volume, children=children)
 
 
 def tree_to_dict(n):
@@ -216,6 +228,48 @@ def generate_trees_by_height(trees_per_height=100, heights=[1, 2, 3, 4, 5], max_
     return trees_by_height
 
 
+def generate_trees_by_height_counts(counts_by_height, max_attempts_per_tree=100):
+    """
+    Generate a balanced set of trees with specific counts per height.
+
+    Args:
+        counts_by_height: dict of {height: num_trees}
+        max_attempts_per_tree: Max attempts per tree generation
+
+    Returns:
+        dict: Trees grouped by height
+    """
+    trees_by_height = {h: [] for h in counts_by_height}
+    signatures = set()
+
+    for target_height, trees_per_height in counts_by_height.items():
+        print(f"\nGenerating {trees_per_height} trees with height {target_height}...")
+        attempts = 0
+        max_attempts = trees_per_height * max_attempts_per_tree
+
+        while len(trees_by_height[target_height]) < trees_per_height and attempts < max_attempts:
+            tree = generate_random_tree(max_depth=target_height, force_depth=True)
+            actual_height = get_tree_height(tree)
+
+            if actual_height == target_height:
+                sig = get_tree_signature(tree)
+                if sig not in signatures:
+                    signatures.add(sig)
+                    trees_by_height[target_height].append(tree)
+                    if len(trees_by_height[target_height]) % 50 == 0:
+                        print(f"  Height {target_height}: {len(trees_by_height[target_height])}/{trees_per_height}")
+
+            attempts += 1
+
+        actual_count = len(trees_by_height[target_height])
+        if actual_count < trees_per_height:
+            print(f"  Warning: Only generated {actual_count} trees for height {target_height}")
+        else:
+            print(f"  ✓ Generated {actual_count} trees for height {target_height}")
+
+    return trees_by_height
+
+
 def get_tree_height(tree):
     """Calculate tree height."""
     if not tree.children:
@@ -229,10 +283,10 @@ def save_trees_as_python(trees, filepath):
     """
     with open(filepath, 'w') as f:
         f.write('"""\nAuto-generated mixing trees data.\n')
-        f.write('100 unique random mixing trees with:\n')
-        f.write('- Height <= 4\n')
+        f.write(f'{len(trees)} unique random mixing trees.\n')
+        f.write(f'- Heights up to {MAX_HEIGHT}\n')
         f.write('- Reagents: {R1, R2, R3, R4}\n')
-        f.write('- Edge weights: 1-10\n')
+        f.write(f'- Volumes: {MIN_VOLUME}-{MAX_VOLUME}\n')
         f.write('- Fluid physics constraint satisfied\n')
         f.write('"""\n\n')
         f.write('import sys\n')
@@ -241,11 +295,11 @@ def save_trees_as_python(trees, filepath):
         f.write('from NTM.tree import node\n\n')
         
         f.write('def get_tree(index):\n')
-        f.write('    """Get a specific tree by index (0-99)."""\n')
+        f.write('    """Get a specific tree by index."""\n')
         f.write('    return TREES[index]\n\n')
         
         f.write('def get_all_trees():\n')
-        f.write('    """Get all 100 trees as a list."""\n')
+        f.write('    """Get all trees as a list."""\n')
         f.write('    return TREES.copy()\n\n')
         
         f.write('# Tree definitions\n')
@@ -303,12 +357,16 @@ if __name__ == '__main__':
     print(f"Volumes: {MIN_VOLUME}-{MAX_VOLUME}")
     print("=" * 60)
     
-    # Generate balanced trees by height (100 per height, heights 2-7)
-    TREES_PER_HEIGHT = 100
-    trees_by_height = generate_trees_by_height(
-        trees_per_height=TREES_PER_HEIGHT, 
-        heights=[2, 3, 4, 5, 6, 7]
-    )
+    # Generate trees by height (paper replication defaults)
+    counts_by_height = {
+        2: 100,
+        3: 300,
+        4: 300,
+        5: 300,
+        6: 100,
+        7: 100,
+    }
+    trees_by_height = generate_trees_by_height_counts(counts_by_height)
     
     # Combine all trees
     all_trees = []
